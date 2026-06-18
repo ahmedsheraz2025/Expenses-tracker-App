@@ -25,6 +25,12 @@ async def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_expenses_created_at
             ON expenses(created_at)
         """)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        """)
         await conn.commit()
     finally:
         await conn.close()

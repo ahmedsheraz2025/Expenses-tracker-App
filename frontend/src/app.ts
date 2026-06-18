@@ -1,7 +1,10 @@
 import { createExpenseInput } from "./components/ExpenseInput.js";
 import { createExpenseList, renderExpenses } from "./components/ExpenseList.js";
 import { createTotalAmount, updateTotalDisplay } from "./components/TotalAmount.js";
+import { createSalaryInput } from "./components/SalaryInput.js";
 import { showToast } from "./components/Toast.js";
+import { showConfirm, showEditPrompt } from "./components/Modal.js";
+import { playSuccess } from "./components/Sound.js";
 
 const API_BASE = "";
 
@@ -9,6 +12,7 @@ interface Expense {
   id: string;
   description: string;
   amount_display: string;
+  amount_cents: number;
   created_at: string;
 }
 
@@ -44,31 +48,49 @@ async function loadTotal() {
   updateTotalDisplay(data.total_cents);
 }
 
-function handleEdit(id: string) {
-  const desc = prompt("New description:");
-  if (!desc) return;
-  const amountStr = prompt("New amount:");
-  if (!amountStr) return;
-  const amount = parseFloat(amountStr);
-  if (isNaN(amount) || amount <= 0) {
-    alert("Amount must be a positive number");
-    return;
-  }
-  apiRequest("PUT", `/expenses/${id}`, {
-    description: desc,
-    amount_cents: Math.round(amount * 100),
-  }).then(() => {
-    showToast("Edited");
-    loadExpenses();
+async function handleEdit(exp: Expense) {
+  const amountVal = (exp.amount_cents / 100).toFixed(2);
+  const result = await showEditPrompt(exp.description, amountVal);
+  if (!result) return;
+  await apiRequest("PUT", `/expenses/${exp.id}`, {
+    description: result.description,
+    amount_cents: result.amountCents,
   });
+  playSuccess();
+  showToast("Edited");
+  loadExpenses();
 }
 
-function handleDelete(id: string) {
-  if (!confirm("Delete this expense?")) return;
-  apiRequest("DELETE", `/expenses/${id}`).then(() => {
-    showToast("Deleted");
-    loadExpenses();
-  });
+async function handleDelete(id: string) {
+  const confirmed = await showConfirm("Delete this expense?");
+  if (!confirmed) return;
+  await apiRequest("DELETE", `/expenses/${id}`);
+  showToast("Deleted");
+  loadExpenses();
+}
+
+function loadMainApp() {
+  const app = document.getElementById("app");
+  if (!app) return;
+  app.innerHTML = `
+    <div class="app-header">
+      <h1>Expenses Tracker</h1>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+    <div id="total-container"></div>
+    <div id="input-container"></div>
+    <div id="list-container"></div>
+  `;
+
+  initThemeToggle();
+  loadTotalContainer();
+  loadInputContainer();
+  loadListContainer();
+  loadExpenses();
 }
 
 function loadInputContainer() {
@@ -80,6 +102,7 @@ function loadInputContainer() {
         description,
         amount_cents: amountCents,
       });
+      playSuccess();
       showToast("Added");
       loadExpenses();
     },
@@ -101,9 +124,40 @@ function loadTotalContainer() {
   container.appendChild(totalEl);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadTotalContainer();
-  loadInputContainer();
-  loadListContainer();
-  loadExpenses();
-});
+const moonSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const sunSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+
+function initThemeToggle() {
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+  const theme = localStorage.getItem("theme") || "light";
+  btn.innerHTML = theme === "dark" ? sunSvg : moonSvg;
+  btn.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme") || "light";
+    const next = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    btn.innerHTML = next === "dark" ? sunSvg : moonSvg;
+  });
+}
+
+async function init() {
+  const app = document.getElementById("app");
+  if (!app) return;
+
+  app.innerHTML = "";
+
+  const salaryData = await apiRequest<{ salary_cents: number }>("GET", "/salary");
+
+  if (salaryData.salary_cents > 0) {
+    loadMainApp();
+  } else {
+    const salaryEl = createSalaryInput(async (cents) => {
+      await apiRequest("PUT", "/salary", { amount_cents: cents });
+      loadMainApp();
+    });
+    app.appendChild(salaryEl);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", init);

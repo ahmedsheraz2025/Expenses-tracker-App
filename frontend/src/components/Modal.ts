@@ -1,0 +1,113 @@
+export function showConfirm(message: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal">
+        <p class="modal-message">${message}</p>
+        <div class="modal-actions">
+          <button class="modal-btn modal-cancel">Cancel</button>
+          <button class="modal-btn modal-confirm">Delete</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const cancelBtn = overlay.querySelector(".modal-cancel") as HTMLButtonElement;
+    const confirmBtn = overlay.querySelector(".modal-confirm") as HTMLButtonElement;
+
+    cancelBtn.addEventListener("click", () => {
+      overlay.remove();
+      resolve(false);
+    });
+    confirmBtn.addEventListener("click", () => {
+      overlay.remove();
+      resolve(true);
+    });
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+    overlay.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        overlay.remove();
+        resolve(false);
+      }
+      if (e.key === "Enter") {
+        overlay.remove();
+        resolve(true);
+      }
+    });
+    setTimeout(() => cancelBtn.focus(), 50);
+  });
+}
+
+export function showEditPrompt(
+  currentDesc: string,
+  currentAmount: string
+): Promise<{ description: string; amountCents: number } | null> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal modal-form">
+        <h3 class="modal-title">Edit Expense</h3>
+        <div class="modal-field">
+          <label for="modal-desc">Description</label>
+          <input type="text" id="modal-desc" class="modal-input" value="${currentDesc}" maxlength="200" />
+        </div>
+        <div class="modal-field">
+          <label for="modal-amount">Amount (Rs)</label>
+          <input type="number" id="modal-amount" class="modal-input" value="${currentAmount}" min="0.01" step="0.01" />
+        </div>
+        <div class="modal-actions">
+          <button class="modal-btn modal-cancel">Cancel</button>
+          <button class="modal-btn modal-save">Save</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const descInput = overlay.querySelector("#modal-desc") as HTMLInputElement;
+    const amountInput = overlay.querySelector("#modal-amount") as HTMLInputElement;
+
+    const close = (result: { description: string; amountCents: number } | null) => {
+      overlay.remove();
+      resolve(result);
+    };
+
+    overlay.querySelector(".modal-cancel")?.addEventListener("click", () => close(null));
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) close(null);
+    });
+    overlay.querySelector(".modal-save")?.addEventListener("click", () => {
+      const desc = descInput.value.trim();
+      const amount = parseFloat(amountInput.value);
+      if (!desc) { descInput.focus(); return; }
+      if (isNaN(amount) || amount <= 0) { amountInput.focus(); return; }
+      close({ description: desc, amountCents: Math.round(amount * 100) });
+    });
+
+    overlay.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        close(null);
+      }
+    });
+    descInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        amountInput.focus();
+      }
+    });
+    amountInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        (overlay.querySelector(".modal-save") as HTMLButtonElement)?.click();
+      }
+    });
+
+    setTimeout(() => descInput.focus(), 50);
+  });
+}

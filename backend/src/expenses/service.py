@@ -3,9 +3,9 @@ from src.expenses.models import ExpenseCreate, ExpenseUpdate
 
 
 def _format_amount(amount_cents: int) -> str:
-    dollars = amount_cents // 100
-    cents = amount_cents % 100
-    return f"${dollars}.{cents:02d}"
+    rupees = amount_cents // 100
+    paise = amount_cents % 100
+    return f"Rs {rupees}.{paise:02d}"
 
 
 def _to_response(expense: dict) -> dict:

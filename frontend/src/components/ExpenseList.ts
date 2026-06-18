@@ -2,6 +2,7 @@ interface Expense {
   id: string;
   description: string;
   amount_display: string;
+  amount_cents: number;
   created_at: string;
 }
 
@@ -27,7 +28,7 @@ export function createExpenseList(): HTMLElement {
 export function renderExpenses(
   tbodyId: string,
   expenses: Expense[],
-  onEdit: (id: string) => void,
+  onEdit: (exp: Expense) => void | Promise<void>,
   onDelete: (id: string) => void
 ) {
   const tbody = document.getElementById(tbodyId);
@@ -53,7 +54,7 @@ export function renderExpenses(
         <button class="delete-btn" data-id="${exp.id}">Delete</button>
       </td>
     `;
-    row.querySelector(".edit-btn")?.addEventListener("click", () => onEdit(exp.id));
+    row.querySelector(".edit-btn")?.addEventListener("click", () => onEdit(exp));
     row.querySelector(".delete-btn")?.addEventListener("click", () => onDelete(exp.id));
     tbody.appendChild(row);
   }

@@ -4,15 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expenses Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="src/styles.css">
+  <script>
+    (function() {
+      const theme = localStorage.getItem("theme") || "light";
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
 </head>
 <body>
-  <div id="app">
-    <h1>Expenses Tracker</h1>
-    <div id="total-container"></div>
-    <div id="input-container"></div>
-    <div id="list-container"></div>
-  </div>
+  <div id="app"></div>
+  <div id="error-container"></div>
   <div id="toast-container"></div>
   <script type="module" src="dist/app.js"></script>
 </body>
