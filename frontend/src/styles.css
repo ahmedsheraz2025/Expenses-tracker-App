@@ -1,0 +1,86 @@
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.expense-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.expense-input input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.expense-input button {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.edit-btn, .delete-btn {
+  padding: 4px 8px;
+  margin: 0 2px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.edit-btn {
+  background: #ffc107;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.toast {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.3s;
+}
+
+.toast-icon {
+  color: #28a745;
+  font-size: 1.2em;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
