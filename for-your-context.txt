@@ -1,0 +1,60 @@
+Expenses Tracker App
+
+Tech Stack:
+- Backend: Python 3.12+, FastAPI, SQLite (aiosqlite)
+- Frontend: TypeScript, vanilla HTML/CSS
+- Font: Inter (Google Fonts)
+
+Structure:
+- backend/src/main.py — FastAPI server, serves frontend as static files
+- backend/src/api/routes.py — REST API endpoints
+- backend/src/expenses/ — models, repository, service layers
+- backend/src/db/database.py — SQLite connection & init
+- frontend/src/app.ts — main app logic
+- frontend/src/components/ — ExpenseInput, ExpenseList, TotalAmount, Modal, Toast, SalaryInput, Sound
+- frontend/src/styles.css — all styles with CSS custom properties (light/dark theme)
+
+Features:
+- Salary onboarding page on first visit (stored in DB settings table)
+- Add, Edit, Delete expenses with custom modals (no browser prompts)
+- Total amount display with gradient card
+- Light/Dark mode toggle with SVG icons, persisted in localStorage
+- Loading spinner on page refresh (min 2 sec)
+- Sound effects: success.mp3 on Add/Edit (Apple verification sound)
+- Toast notifications at bottom
+- Error toasts at top (red, auto-dismiss 2 sec)
+- Enter key navigation between fields
+- Mobile responsive
+
+Sound Files:
+- frontend/success.mp3 — Apple verification sound, used for Add/Edit
+- apple verification sound.mp3 (root) — original source file
+
+API Endpoints:
+- GET /salary — get saved salary
+- PUT /salary — save salary
+- GET /expenses — list all expenses
+- POST /expenses — create expense
+- PUT /expenses/{id} — update expense
+- DELETE /expenses/{id} — delete expense
+- GET /expenses/total — get total of all expenses
+
+Currency: Rs (Pakistani Rupees)
+Database: backend/expenses.db
+
+---
+Edit and Delete buttons styling:
+
+Design:
+- 1px solid border all around
+- Border-radius: 20px (pill shape)
+- No background by default
+- Left-aligned icon (Tabler Icons: ti-edit, ti-trash)
+- Icon + text with 6px gap
+- Font size: 14px, font weight: 500
+- Padding: 4px 14px
+
+Colors:
+- Edit: #D4A017 (golden), hover #F5C842 + golden bg
+- Delete: #CC3333 (dark red), hover #FF5555 + red bg
+- Transition: color, border-color, background 0.2s ease

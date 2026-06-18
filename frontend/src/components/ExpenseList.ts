@@ -50,8 +50,12 @@ export function renderExpenses(
       <td>${exp.amount_display}</td>
       <td>${date}</td>
       <td>
-        <button class="edit-btn" data-id="${exp.id}">Edit</button>
-        <button class="delete-btn" data-id="${exp.id}">Delete</button>
+        <button class="action-btn edit-btn" data-id="${exp.id}">
+          <i class="ti ti-edit" aria-hidden="true"></i> Edit
+        </button>
+        <button class="action-btn delete-btn" data-id="${exp.id}">
+          <i class="ti ti-trash" aria-hidden="true"></i> Delete
+        </button>
       </td>
     `;
     row.querySelector(".edit-btn")?.addEventListener("click", () => onEdit(exp));

@@ -145,9 +145,11 @@ async function init() {
   const app = document.getElementById("app");
   if (!app) return;
 
+  const [salaryData] = await Promise.all([
+    apiRequest<{ salary_cents: number }>("GET", "/salary"),
+    new Promise(r => setTimeout(r, 2000)),
+  ]);
   app.innerHTML = "";
-
-  const salaryData = await apiRequest<{ salary_cents: number }>("GET", "/salary");
 
   if (salaryData.salary_cents > 0) {
     loadMainApp();
