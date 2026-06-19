@@ -10,6 +10,11 @@ import { initVoiceInput } from "./components/VoiceInput.js";
 
 const API_BASE = "";
 const WARNING_THRESHOLD_CENTS = 5000000;
+
+function capitalize(str: string): string {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 let warningAcknowledged = false;
 let currentExpenses: Expense[] = [];
 
@@ -81,7 +86,7 @@ async function handleEdit(exp: Expense) {
   const result = await showEditPrompt(exp.description, amountVal);
   if (!result) return;
   await apiRequest("PUT", `/expenses/${exp.id}`, {
-    description: result.description,
+    description: capitalize(result.description),
     amount_cents: result.amountCents,
   });
   playSuccess();
@@ -129,7 +134,7 @@ function loadInputContainer() {
   const inputEl = createExpenseInput({
     async onAdd(description, amountCents) {
       await apiRequest("POST", "/expenses", {
-        description,
+        description: capitalize(description),
         amount_cents: amountCents,
       });
       playSuccess();
@@ -210,7 +215,7 @@ function loadFabButton() {
 
   initVoiceInput(micBtn, {
     async addExpense(description, amountCents) {
-      await apiRequest("POST", "/expenses", { description, amount_cents: amountCents });
+      await apiRequest("POST", "/expenses", { description: capitalize(description), amount_cents: amountCents });
       playSuccess();
       showToast("Added");
       loadExpenses();

@@ -191,10 +191,23 @@ async function handleText(
     if (expenses.length === 0) { showToast("No expenses to edit", false); return; }
     const rest = lower.replace(/^edit\s*/, "").trim();
     const m = rest.match(/^(\w+)\s*/);
-    if (!m) { showToast("Say edit followed by expense number", false); return; }
-    const idx = wordToNumber(m[1]);
-    if (idx === null || idx < 1 || idx > expenses.length) { showToast("Expense number not found", false); return; }
-    actions.editExpense(idx - 1);
+    let idx: number | null = null;
+    if (m) {
+      idx = wordToNumber(m[1]);
+      if (idx !== null) {
+        if (idx < 1 || idx > expenses.length) { showToast("Expense number not found", false); return; }
+        idx = idx - 1;
+      }
+    }
+    if (idx === null) {
+      const found = expenses.findIndex((e: any) => e.description.toLowerCase().includes(rest));
+      if (found !== -1) idx = found;
+    }
+    if (idx === null || idx < 0 || idx >= expenses.length) {
+      showToast("Expense not found", false);
+      return;
+    }
+    actions.editExpense(idx);
     return;
   }
 

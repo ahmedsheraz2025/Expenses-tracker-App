@@ -60,7 +60,7 @@ export function showEditPrompt(
         </div>
         <div class="modal-field">
           <label for="modal-amount">Amount (Rs)</label>
-          <input type="number" id="modal-amount" class="modal-input" value="${currentAmount}" min="0.01" step="0.01" />
+          <input type="text" id="modal-amount" class="modal-input" value="${currentAmount}" inputmode="decimal" />
         </div>
         <div class="modal-actions">
           <button class="modal-btn modal-cancel">Cancel</button>
@@ -108,7 +108,16 @@ export function showEditPrompt(
       }
     });
 
-    setTimeout(() => descInput.focus(), 50);
+    setTimeout(() => {
+      descInput.focus();
+      descInput.setSelectionRange(descInput.value.length, descInput.value.length);
+    }, 50);
+
+    amountInput.addEventListener("focus", () => {
+      setTimeout(() => {
+        amountInput.setSelectionRange(amountInput.value.length, amountInput.value.length);
+      }, 0);
+    });
   });
 }
 
