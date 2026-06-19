@@ -111,3 +111,33 @@ export function showEditPrompt(
     setTimeout(() => descInput.focus(), 50);
   });
 }
+
+export function showExpenseWarning(): Promise<"continue" | "remove"> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "warning-overlay";
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("show"));
+
+    const banner = document.createElement("div");
+    banner.className = "warning-banner";
+    banner.innerHTML = `
+      <p class="warning-banner-text">Expenses are increasing. Try to reduce your expenses</p>
+      <div class="warning-banner-actions">
+        <button class="modal-btn warning-remove">Remove recent expense</button>
+        <button class="modal-btn warning-continue">Continue adding</button>
+      </div>
+    `;
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => banner.classList.add("show"));
+
+    const close = (result: "continue" | "remove") => {
+      overlay.classList.remove("show");
+      banner.classList.remove("show");
+      setTimeout(() => { overlay.remove(); banner.remove(); resolve(result); }, 300);
+    };
+
+    banner.querySelector(".warning-remove")?.addEventListener("click", () => close("remove"));
+    banner.querySelector(".warning-continue")?.addEventListener("click", () => close("continue"));
+  });
+}

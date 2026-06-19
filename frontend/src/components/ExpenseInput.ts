@@ -1,4 +1,5 @@
 import { showError } from "./Toast.js";
+import { playError } from "./Sound.js";
 
 interface ExpenseInputProps {
   onAdd: (description: string, amountCents: number) => void;
@@ -47,12 +48,14 @@ export function createExpenseInput(props: ExpenseInputProps): HTMLElement {
 
     if (!desc) {
       descInput.classList.add("input-error");
+      playError();
       showError("Enter your description", () => descInput.classList.remove("input-error"));
       descInput.focus();
       return;
     }
     if (isNaN(amount) || amount <= 0) {
       amountInput.classList.add("input-error");
+      playError();
       showError("Enter a valid amount", () => amountInput.classList.remove("input-error"));
       amountInput.focus();
       return;

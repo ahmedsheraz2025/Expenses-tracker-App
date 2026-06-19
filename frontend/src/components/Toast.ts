@@ -1,13 +1,14 @@
-export function showToast(message: string) {
+export function showToast(message: string, showIcon = true) {
   const container = document.getElementById("toast-container");
   if (!container) return;
+  container.innerHTML = "";
   const toast = document.createElement("div");
   toast.className = "toast";
-  toast.innerHTML = `<span class="toast-icon">&#10003;</span>${message}`;
+  toast.innerHTML = showIcon ? `<span class="toast-icon">&#10003;</span>${message}` : message;
   container.appendChild(toast);
   setTimeout(() => {
     toast.remove();
-  }, 2000);
+  }, 2500);
 }
 
 export function showError(message: string, onClose?: () => void) {
@@ -20,5 +21,5 @@ export function showError(message: string, onClose?: () => void) {
   setTimeout(() => {
     el.remove();
     onClose?.();
-  }, 2000);
+  }, 2500);
 }

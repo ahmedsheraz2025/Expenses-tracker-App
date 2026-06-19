@@ -111,7 +111,7 @@ body {
 }
 
 h1 {
-  font-size: 1.65rem;
+  font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.5px;
   background: var(--header-bg);
@@ -321,8 +321,9 @@ tbody tr:first-child td[colspan] {
   box-shadow: none;
 }
 
-.action-btn i {
-  font-size: 16px;
+.action-btn svg {
+  width: 16px;
+  height: 16px;
   vertical-align: middle;
 }
 
@@ -569,6 +570,93 @@ tbody tr:first-child td[colspan] {
   color: white;
 }
 
+.warning-remove {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  flex: 1;
+}
+
+.warning-remove:hover {
+  background: var(--surface-hover);
+  box-shadow: none;
+}
+
+.warning-continue {
+  background: #ef4444;
+  color: white;
+  flex: 1;
+}
+
+.warning-continue:hover {
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.4);
+}
+
+.total-warning {
+  color: #ef4444 !important;
+}
+
+.warning-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1999;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.warning-overlay.show {
+  opacity: 1;
+}
+
+.warning-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  z-index: 2000;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 32px 28px;
+  width: 90%;
+  max-width: 520px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  border-radius: 16px;
+  opacity: 0;
+}
+
+.warning-banner.show {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.warning-banner-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.warning-banner-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.warning-banner .modal-btn:hover {
+  transform: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .warning-banner {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
 .modal-save:hover {
   box-shadow: 0 2px 12px var(--btn-primary-shadow);
 }
@@ -684,6 +772,80 @@ tbody tr:first-child td[colspan] {
 
 [data-theme="dark"] .salary-card {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+#fab-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 500;
+}
+
+.fab-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.fab-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--theme-btn-border);
+  background: var(--theme-btn-bg);
+  color: var(--theme-btn-text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px var(--theme-btn-shadow);
+  transition: box-shadow 0.15s, background 0.3s;
+}
+
+.fab-btn:hover {
+  box-shadow: 0 4px 16px var(--theme-btn-shadow);
+}
+
+.fab-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  right: 0;
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.fab-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 22px;
+  border: 6px solid transparent;
+  border-top-color: var(--toast-bg);
+}
+
+.fab-wrapper:hover .fab-tooltip {
+  opacity: 1;
+}
+
+.fab-btn.listening {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+  animation: pulse-mic 1s ease-in-out infinite;
+}
+
+@keyframes pulse-mic {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
 }
 
 @media (max-width: 480px) {

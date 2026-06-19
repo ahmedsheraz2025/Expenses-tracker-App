@@ -3,10 +3,15 @@ import { createExpenseList, renderExpenses } from "./components/ExpenseList.js";
 import { createTotalAmount, updateTotalDisplay } from "./components/TotalAmount.js";
 import { createSalaryInput } from "./components/SalaryInput.js";
 import { showToast } from "./components/Toast.js";
-import { showConfirm, showEditPrompt } from "./components/Modal.js";
+import { showConfirm, showEditPrompt, showExpenseWarning } from "./components/Modal.js";
+import { setTotalColorRed, resetTotalColor } from "./components/TotalAmount.js";
 import { playSuccess } from "./components/Sound.js";
+import { initVoiceInput } from "./components/VoiceInput.js";
 
 const API_BASE = "";
+const WARNING_THRESHOLD_CENTS = 5000000;
+let warningAcknowledged = false;
+let currentExpenses: Expense[] = [];
 
 interface Expense {
   id: string;
@@ -39,13 +44,36 @@ async function apiRequest<T>(
 
 async function loadExpenses() {
   const data = await apiRequest<{ expenses: Expense[] }>("GET", "/expenses");
+  currentExpenses = data.expenses;
   renderExpenses("expense-tbody", data.expenses, handleEdit, handleDelete);
   await loadTotal();
+  await checkExpenseWarning(data.expenses);
+}
+
+async function checkExpenseWarning(expenses: Expense[]) {
+  if (warningAcknowledged) return;
+  const totalData = await apiRequest<{ total_cents: number }>("GET", "/expenses/total");
+  if (totalData.total_cents <= WARNING_THRESHOLD_CENTS) return;
+  if (expenses.length === 0) return;
+
+  const choice = await showExpenseWarning();
+  if (choice === "continue") {
+    warningAcknowledged = true;
+    setTotalColorRed();
+  } else {
+    await apiRequest("DELETE", `/expenses/${expenses[0].id}`);
+    showToast("Deleted");
+    await loadExpenses();
+  }
 }
 
 async function loadTotal() {
   const data = await apiRequest<{ total_cents: number }>("GET", "/expenses/total");
   updateTotalDisplay(data.total_cents);
+  if (data.total_cents <= WARNING_THRESHOLD_CENTS) {
+    resetTotalColor();
+    warningAcknowledged = false;
+  }
 }
 
 async function handleEdit(exp: Expense) {
@@ -84,12 +112,14 @@ function loadMainApp() {
     <div id="total-container"></div>
     <div id="input-container"></div>
     <div id="list-container"></div>
+    <div id="fab-container"></div>
   `;
 
   initThemeToggle();
   loadTotalContainer();
   loadInputContainer();
   loadListContainer();
+  loadFabButton();
   loadExpenses();
 }
 
@@ -160,6 +190,48 @@ async function init() {
     });
     app.appendChild(salaryEl);
   }
+}
+
+function loadFabButton() {
+  const container = document.getElementById("fab-container");
+  if (!container) return;
+  const wrapper = document.createElement("div");
+  wrapper.className = "fab-wrapper";
+  wrapper.innerHTML = `
+    <button id="fab-btn" class="fab-btn" aria-label="Voice input">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <span class="fab-tooltip">Click to use this app with your voice</span>
+  `;
+  container.appendChild(wrapper);
+
+  const micBtn = wrapper.querySelector("#fab-btn") as HTMLElement;
+  if (!micBtn) return;
+
+  initVoiceInput(micBtn, {
+    async addExpense(description, amountCents) {
+      await apiRequest("POST", "/expenses", { description, amount_cents: amountCents });
+      playSuccess();
+      showToast("Added");
+      loadExpenses();
+    },
+    toggleTheme() {
+      document.getElementById("theme-toggle")?.click();
+    },
+    async deleteExpense(index: number) {
+      const exp = currentExpenses[index];
+      if (!exp) return;
+      await handleDelete(exp.id);
+    },
+    async editExpense(index: number) {
+      const exp = currentExpenses[index];
+      if (!exp) return;
+      await handleEdit(exp);
+    },
+    getExpenses() {
+      return currentExpenses;
+    },
+  });
 }
 
 document.addEventListener("DOMContentLoaded", init);
