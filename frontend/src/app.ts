@@ -1,11 +1,10 @@
 import { createExpenseInput } from "./components/ExpenseInput.js";
 import { createExpenseList, renderExpenses } from "./components/ExpenseList.js";
-import { createTotalAmount, updateTotalDisplay } from "./components/TotalAmount.js";
+import { createTotalAmount, updateTotalDisplay, setTotalColorRed, resetTotalColor } from "./components/TotalAmount.js";
 import { createSalaryInput } from "./components/SalaryInput.js";
 import { showToast } from "./components/Toast.js";
 import { showConfirm, showEditPrompt, showExpenseWarning } from "./components/Modal.js";
-import { setTotalColorRed, resetTotalColor } from "./components/TotalAmount.js";
-import { playSuccess } from "./components/Sound.js";
+import { playSuccess, playWarning } from "./components/Sound.js";
 import { initVoiceInput } from "./components/VoiceInput.js";
 
 const API_BASE = "";
@@ -61,12 +60,15 @@ async function checkExpenseWarning(expenses: Expense[]) {
   if (totalData.total_cents <= WARNING_THRESHOLD_CENTS) return;
   if (expenses.length === 0) return;
 
+  setTotalColorRed();
   const choice = await showExpenseWarning();
   if (choice === "continue") {
     warningAcknowledged = true;
-    setTotalColorRed();
   } else {
-    await apiRequest("DELETE", `/expenses/${expenses[0].id}`);
+    warningAcknowledged = true;
+    resetTotalColor();
+    const recentExpense = expenses[0];
+    await apiRequest("DELETE", `/expenses/${recentExpense.id}`);
     showToast("Deleted");
     await loadExpenses();
   }
@@ -137,7 +139,12 @@ function loadInputContainer() {
         description: capitalize(description),
         amount_cents: amountCents,
       });
-      playSuccess();
+      const totalData = await apiRequest<{ total_cents: number }>("GET", "/expenses/total");
+      if (totalData.total_cents > WARNING_THRESHOLD_CENTS) {
+        playWarning();
+      } else {
+        playSuccess();
+      }
       showToast("Added");
       loadExpenses();
     },
@@ -182,7 +189,7 @@ async function init() {
 
   const [salaryData] = await Promise.all([
     apiRequest<{ salary_cents: number }>("GET", "/salary"),
-    new Promise(r => setTimeout(r, 2000)),
+    new Promise(r => setTimeout(r, 1500)),
   ]);
   app.innerHTML = "";
 
@@ -216,7 +223,12 @@ function loadFabButton() {
   initVoiceInput(micBtn, {
     async addExpense(description, amountCents) {
       await apiRequest("POST", "/expenses", { description: capitalize(description), amount_cents: amountCents });
-      playSuccess();
+      const totalData = await apiRequest<{ total_cents: number }>("GET", "/expenses/total");
+      if (totalData.total_cents > WARNING_THRESHOLD_CENTS) {
+        playWarning();
+      } else {
+        playSuccess();
+      }
       showToast("Added");
       loadExpenses();
     },

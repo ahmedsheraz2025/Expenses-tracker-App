@@ -10,7 +10,7 @@ export function createExpenseInput(props: ExpenseInputProps): HTMLElement {
   container.className = "expense-input";
   container.innerHTML = `
     <input type="text" id="desc-input" placeholder="Description" maxlength="200" />
-    <input type="number" id="amount-input" class="no-spinner" placeholder="Amount" min="0.01" step="0.01" />
+    <input type="number" id="amount-input" class="no-spinner" placeholder="Amount (Rs)" min="0.01" step="0.01" />
     <button id="add-btn">Add</button>
   `;
 

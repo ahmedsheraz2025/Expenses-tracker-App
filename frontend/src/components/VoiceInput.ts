@@ -43,6 +43,7 @@ function extractDescription(text: string, amountStr: string): string {
 
 let isListening = false;
 let currentRecognition: any = null;
+let pendingContext: { description: string } | null = null;
 
 interface Expense {
   id: string;
@@ -72,15 +73,18 @@ export function initVoiceInput(
   micBtn.addEventListener("click", () => {
     if (isListening) {
       stopListening();
+      pendingContext = null;
       showToast("Stopped", false);
       return;
     }
+    pendingContext = null;
     startRecognition(actions, micBtn, "Listening...");
   });
 }
 
 function stopListening() {
   isListening = false;
+  pendingContext = null;
   if (currentRecognition) {
     try { currentRecognition.abort(); } catch {}
     currentRecognition = null;
@@ -104,26 +108,39 @@ function startRecognition(
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
 
+    if (currentRecognition) {
+      try { currentRecognition.abort(); } catch {}
+      currentRecognition = null;
+    }
+
     currentRecognition = new SpeechRecognition();
     currentRecognition.lang = "en-US";
     currentRecognition.interimResults = false;
     currentRecognition.maxAlternatives = 1;
-    currentRecognition.continuous = false;
+    currentRecognition.continuous = true;
+
+    if (context) {
+      pendingContext = context;
+    }
 
     isListening = true;
     micBtn.classList.add("listening");
     showToast(prompt, false);
 
-    currentRecognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript.trim();
-      stopListening();
-      micBtn.classList.remove("listening");
-      handleText(text, actions, micBtn, context);
+    currentRecognition.onresult = async (event: any) => {
+      const text = event.results[event.results.length - 1][0].transcript.trim();
+      const ctx = pendingContext;
+      let done = false;
+      if (ctx) {
+        pendingContext = null;
+        done = await handleTextWithContext(text, actions, micBtn, ctx);
+      } else {
+        done = await handleText(text, actions, micBtn);
+      }
+      if (done) stopListening();
     };
 
     currentRecognition.onerror = (event: any) => {
-      isListening = false;
-      micBtn.classList.remove("listening");
       if (event.error === "no-speech" || event.error === "aborted") return;
       showToast(event.error === "not-allowed" ? "Microphone access denied" : "Try again", false);
     };
@@ -131,12 +148,40 @@ function startRecognition(
     currentRecognition.onend = () => {
       isListening = false;
       micBtn.classList.remove("listening");
+      currentRecognition = null;
     };
 
     currentRecognition.start();
   } catch {
     isListening = false;
     micBtn.classList.remove("listening");
+  }
+}
+
+async function handleTextWithContext(
+  text: string,
+  actions: {
+    addExpense: (description: string, amountCents: number) => Promise<void>;
+    toggleTheme: () => void;
+    deleteExpense: (index: number) => Promise<void>;
+    editExpense: (index: number) => Promise<void>;
+    getExpenses: () => Expense[];
+  },
+  micBtn: HTMLElement,
+  context: { description: string }
+): Promise<boolean> {
+  const amountCents = parseAmount(text);
+  if (amountCents === null || amountCents <= 0) {
+    showToast("Could not detect amount, try again", false);
+    pendingContext = context;
+    return false;
+  }
+  try {
+    await actions.addExpense(context.description, amountCents);
+    return true;
+  } catch {
+    showToast("Failed to add expense", false);
+    return true;
   }
 }
 
@@ -149,9 +194,8 @@ async function handleText(
     editExpense: (index: number) => Promise<void>;
     getExpenses: () => Expense[];
   },
-  micBtn: HTMLElement,
-  context?: { description: string }
-) {
+  micBtn: HTMLElement
+): Promise<boolean> {
   const lower = text.toLowerCase();
 
   if (/\b(dark|light)\s*mode\b|\btoggle\s*theme\b/i.test(lower)) {
@@ -166,12 +210,12 @@ async function handleText(
       actions.toggleTheme();
       showToast(`Now on ${target === "dark" ? "Dark" : "Light"} mode`, false);
     }
-    return;
+    return true;
   }
 
   if (/^delete\b/.test(lower)) {
     const expenses = actions.getExpenses();
-    if (expenses.length === 0) { showToast("No expenses to delete", false); return; }
+    if (expenses.length === 0) { showToast("No expenses to delete", false); return true; }
     let idx = extractIndex(lower, expenses.length);
     if (idx === null) {
       const query = lower.replace(/^delete\s*/, "").trim();
@@ -180,22 +224,22 @@ async function handleText(
     }
     if (idx === null || idx < 0 || idx >= expenses.length) {
       showToast("Expense not found", false);
-      return;
+      return true;
     }
     actions.deleteExpense(idx);
-    return;
+    return true;
   }
 
   if (/^edit\b/.test(lower)) {
     const expenses = actions.getExpenses();
-    if (expenses.length === 0) { showToast("No expenses to edit", false); return; }
+    if (expenses.length === 0) { showToast("No expenses to edit", false); return true; }
     const rest = lower.replace(/^edit\s*/, "").trim();
     const m = rest.match(/^(\w+)\s*/);
     let idx: number | null = null;
     if (m) {
       idx = wordToNumber(m[1]);
       if (idx !== null) {
-        if (idx < 1 || idx > expenses.length) { showToast("Expense number not found", false); return; }
+        if (idx < 1 || idx > expenses.length) { showToast("Expense number not found", false); return true; }
         idx = idx - 1;
       }
     }
@@ -205,20 +249,10 @@ async function handleText(
     }
     if (idx === null || idx < 0 || idx >= expenses.length) {
       showToast("Expense not found", false);
-      return;
+      return true;
     }
     actions.editExpense(idx);
-    return;
-  }
-
-  if (context) {
-    const amountCents = parseAmount(text);
-    if (amountCents === null || amountCents <= 0) {
-      showToast("Could not detect amount, try again", false);
-      return;
-    }
-    await actions.addExpense(context.description, amountCents);
-    return;
+    return true;
   }
 
   if (/^(add|new|create)\b/i.test(lower) || /(rupees?|rs)\b/i.test(lower)) {
@@ -227,22 +261,28 @@ async function handleText(
     const description = amountCents ? extractDescription(lower, amountStr) : text.replace(/^(add|new|create)\s*/i, "").trim();
 
     if (amountCents && amountCents > 0 && description) {
-      await actions.addExpense(description, amountCents);
-      return;
+      try {
+        await actions.addExpense(description, amountCents);
+      } catch {
+        showToast("Failed to add expense", false);
+      }
+      return true;
     }
 
     if (description && (!amountCents || amountCents <= 0)) {
-      setTimeout(() => startRecognition(actions, micBtn, "And the amount?", { description }), 300);
-      return;
+      pendingContext = { description };
+      showToast("And the amount?", false);
+      return false;
     }
 
     if (!description) {
       showToast("Say description and amount", false);
-      return;
+      return true;
     }
   }
 
   showToast("Command not recognized", false);
+  return true;
 }
 
 function extractIndex(text: string, max: number): number | null {
