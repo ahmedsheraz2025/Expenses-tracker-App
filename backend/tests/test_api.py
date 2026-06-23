@@ -1,22 +1,19 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from src.main import app
-from src.db.database import init_db, get_connection
+from src.db.database import init_db, create_pool, close_pool, get_connection
 
 
 @pytest.fixture(autouse=True)
-async def setup_db():
+async def db():
+    await create_pool()
     await init_db()
-
-
-@pytest.fixture(autouse=True)
-async def clear_db():
-    conn = await get_connection()
-    try:
-        await conn.execute("DELETE FROM expenses")
+    async with get_connection() as conn:
+        async with conn.cursor() as cursor:
+            await cursor.execute("DELETE FROM expenses")
         await conn.commit()
-    finally:
-        await conn.close()
+    yield
+    await close_pool()
 
 
 @pytest.fixture
@@ -50,7 +47,7 @@ class TestTotalExpenses:
         assert response.status_code == 200
         data = response.json()
         assert data["total_cents"] == 3500
-        assert data["total_display"] == "$35.00"
+        assert data["total_display"] == "Rs 35.00"
 
     async def test_total_zero_when_no_expenses(self, client):
         response = await client.get("/expenses/total")
