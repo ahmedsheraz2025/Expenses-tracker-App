@@ -7,7 +7,7 @@ export function showConfirm(message: string): Promise<boolean> {
         <p class="modal-message">${message}</p>
         <div class="modal-actions">
           <button class="modal-btn modal-cancel">Cancel</button>
-          <button class="modal-btn modal-confirm">Delete</button>
+          <button class="modal-btn modal-confirm">Confirm</button>
         </div>
       </div>
     `;
@@ -148,5 +148,68 @@ export function showExpenseWarning(): Promise<"continue" | "remove"> {
 
     banner.querySelector(".warning-remove")?.addEventListener("click", () => close("remove"));
     banner.querySelector(".warning-continue")?.addEventListener("click", () => close("continue"));
+  });
+}
+
+export function showRecoverConfirm(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal">
+        <p class="modal-message">Deleted your all Expenses by mistake? Don't worry press Recover to get back your Expenses</p>
+        <div class="modal-actions">
+          <button class="modal-btn modal-cancel">Cancel</button>
+          <button class="modal-btn modal-confirm" style="background:#059669">Recover</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const cancelBtn = overlay.querySelector(".modal-cancel") as HTMLButtonElement;
+    const confirmBtn = overlay.querySelector(".modal-confirm") as HTMLButtonElement;
+
+    cancelBtn.addEventListener("click", () => {
+      overlay.remove();
+      resolve(false);
+    });
+    confirmBtn.addEventListener("click", () => {
+      overlay.remove();
+      resolve(true);
+    });
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+    overlay.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        overlay.remove();
+        resolve(false);
+      }
+      if (e.key === "Enter") {
+        overlay.remove();
+        resolve(true);
+      }
+    });
+    setTimeout(() => cancelBtn.focus(), 50);
+  });
+}
+
+export function showRecoveredPopup(): void {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal" style="text-align:center">
+      <p class="modal-message">Recovered</p>
+      <button class="modal-btn modal-save" id="recovered-ok" style="margin-top:8px">OK</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const okBtn = overlay.querySelector("#recovered-ok") as HTMLButtonElement;
+  okBtn.addEventListener("click", () => overlay.remove());
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
   });
 }

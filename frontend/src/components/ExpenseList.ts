@@ -2,7 +2,7 @@ const PER_PAGE = 10;
 let currentPage = 1;
 let allExpenses: Expense[] = [];
 let currentOnEdit: ((exp: Expense) => void | Promise<void>) | null = null;
-let currentOnDelete: ((id: string) => void) | null = null;
+let currentOnDelete: ((id: string, description: string) => void) | null = null;
 
 interface Expense {
   id: string;
@@ -36,7 +36,7 @@ export function renderExpenses(
   tbodyId: string,
   expenses: Expense[],
   onEdit: (exp: Expense) => void | Promise<void>,
-  onDelete: (id: string) => void
+  onDelete: (id: string, description: string) => void
 ) {
   allExpenses = expenses;
   currentOnEdit = onEdit;
@@ -74,7 +74,7 @@ export function renderExpenses(
         </td>
       `;
       row.querySelector(".edit-btn")?.addEventListener("click", () => onEdit(exp));
-      row.querySelector(".delete-btn")?.addEventListener("click", () => onDelete(exp.id));
+      row.querySelector(".delete-btn")?.addEventListener("click", () => onDelete(exp.id, exp.description));
       tbody.appendChild(row);
     }
   }

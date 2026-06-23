@@ -43,7 +43,7 @@ function extractDescription(text: string, amountStr: string): string {
 
 let isListening = false;
 let currentRecognition: any = null;
-let pendingContext: { description: string } | null = null;
+let pendingContext: { action: "add" | "delete" | "edit"; description?: string } | null = null;
 
 interface Expense {
   id: string;
@@ -101,7 +101,7 @@ function startRecognition(
   },
   micBtn: HTMLElement,
   prompt: string,
-  context?: { description: string }
+  context?: { action: "add" | "delete" | "edit"; description?: string }
 ) {
   try {
     const SpeechRecognition =
@@ -168,8 +168,26 @@ async function handleTextWithContext(
     getExpenses: () => Expense[];
   },
   micBtn: HTMLElement,
-  context: { description: string }
+  context: { action: "add" | "delete" | "edit"; description?: string }
 ): Promise<boolean> {
+  if (context.action === "delete" || context.action === "edit") {
+    const expenses = actions.getExpenses();
+    if (expenses.length === 0) { showToast("No expenses to delete", false); return true; }
+    const query = text.toLowerCase();
+    const idx = expenses.findIndex((e: any) => e.description.toLowerCase().includes(query));
+    if (idx === -1) {
+      showToast("Expense not found. Say the expense name again", false);
+      pendingContext = context;
+      return false;
+    }
+    if (context.action === "delete") {
+      actions.deleteExpense(idx);
+    } else {
+      actions.editExpense(idx);
+    }
+    return true;
+  }
+
   const amountCents = parseAmount(text);
   if (amountCents === null || amountCents <= 0) {
     showToast("Could not detect amount, try again", false);
@@ -177,7 +195,7 @@ async function handleTextWithContext(
     return false;
   }
   try {
-    await actions.addExpense(context.description, amountCents);
+    await actions.addExpense(context.description!, amountCents);
     return true;
   } catch {
     showToast("Failed to add expense", false);
@@ -219,6 +237,7 @@ async function handleText(
     let idx = extractIndex(lower, expenses.length);
     if (idx === null) {
       const query = lower.replace(/^delete\s*/, "").trim();
+      if (!query) { pendingContext = { action: "delete" }; showToast("Say the Expense to Delete", false); return false; }
       const found = expenses.findIndex((e: any) => e.description.toLowerCase().includes(query));
       if (found !== -1) idx = found;
     }
@@ -244,6 +263,7 @@ async function handleText(
       }
     }
     if (idx === null) {
+      if (!rest) { pendingContext = { action: "edit" }; showToast("Say the Expense to Edit", false); return false; }
       const found = expenses.findIndex((e: any) => e.description.toLowerCase().includes(rest));
       if (found !== -1) idx = found;
     }
@@ -270,7 +290,7 @@ async function handleText(
     }
 
     if (description && (!amountCents || amountCents <= 0)) {
-      pendingContext = { description };
+      pendingContext = { action: "add", description };
       showToast("And the amount?", false);
       return false;
     }
@@ -279,6 +299,11 @@ async function handleText(
       showToast("Say description and amount", false);
       return true;
     }
+  }
+
+  if (/\bexpenses?\b/i.test(lower)) {
+    showToast("Say the Expense to Delete or Edit", false);
+    return false;
   }
 
   showToast("Command not recognized", false);

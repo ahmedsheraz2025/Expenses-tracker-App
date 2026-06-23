@@ -69,6 +69,18 @@ async def total_expenses():
     return {"total_cents": total, "total_display": f"Rs {rupees}.{paise:02d}"}
 
 
+@router.delete("/expenses", status_code=200)
+async def delete_all_expenses():
+    await service.delete_all()
+    return {"message": "All expenses deleted"}
+
+
+@router.post("/expenses/recover", status_code=200)
+async def recover_expenses():
+    count = await service.recover()
+    return {"message": "Recovered", "count": len(count)}
+
+
 @router.delete("/expenses/{expense_id}", status_code=204)
 async def delete_expense(expense_id: str):
     deleted = await service.delete(expense_id)

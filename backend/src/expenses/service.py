@@ -1,3 +1,4 @@
+import json
 from src.expenses.repository import ExpenseRepository
 from src.expenses.models import ExpenseCreate, ExpenseUpdate
 
@@ -37,4 +38,23 @@ class ExpenseService:
         return [_to_response(e) for e in expenses]
 
     async def delete(self, expense_id: str) -> bool:
+        expense = await self.repo.get_by_id(expense_id)
+        if not expense:
+            return False
+        await self.repo.append_to_backup(expense)
         return await self.repo.delete(expense_id)
+
+    async def delete_all(self) -> None:
+        backup = await self.repo.list_all_raw()
+        await self.repo.save_backup(json.dumps(backup))
+        await self.repo.delete_all()
+
+    async def recover(self) -> list[dict]:
+        raw = await self.repo.get_backup()
+        if not raw:
+            return []
+        expenses = json.loads(raw)
+        for exp in expenses:
+            await self.repo.insert_raw(exp)
+        await self.repo.clear_backup()
+        return expenses

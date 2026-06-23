@@ -150,6 +150,16 @@ h1 {
   background-clip: text;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.header-actions {
+  position: relative;
+}
+
 .theme-btn {
   width: 40px;
   height: 40px;
@@ -169,6 +179,84 @@ h1 {
 
 .theme-btn:hover {
   box-shadow: 0 2px 8px var(--theme-btn-shadow);
+}
+
+.extra-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  visibility: hidden;
+  z-index: 100;
+  min-width: 200px;
+  pointer-events: none;
+  transform-origin: top right;
+}
+
+.extra-dropdown.open {
+  visibility: visible;
+  animation: zoomIn 0.2s ease-out forwards;
+  pointer-events: auto;
+}
+
+.extra-dropdown.closing {
+  visibility: visible;
+  animation: zoomOut 0.2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes zoomOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.delete-all-btn {
+  color: #CC3333;
+}
+
+.delete-all-btn:hover {
+  background: rgba(204, 51, 51, 0.08);
+}
+
+.recover-btn {
+  color: #059669;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 14px;
+}
+
+.recover-btn:hover {
+  background: rgba(5, 150, 105, 0.08);
+}
+
+[data-theme="dark"] .extra-dropdown {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 
@@ -352,7 +440,7 @@ td {
 }
 
 td:first-child {
-  font-weight: 500;
+  font-weight: 700;
   color: var(--text);
 }
 

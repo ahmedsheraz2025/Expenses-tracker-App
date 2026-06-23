@@ -3,7 +3,7 @@ import { createExpenseList, renderExpenses } from "./components/ExpenseList.js";
 import { createTotalAmount, updateTotalDisplay, setTotalColorRed, resetTotalColor } from "./components/TotalAmount.js";
 import { createSalaryInput } from "./components/SalaryInput.js";
 import { showToast } from "./components/Toast.js";
-import { showConfirm, showEditPrompt, showExpenseWarning } from "./components/Modal.js";
+import { showConfirm, showEditPrompt, showExpenseWarning, showRecoverConfirm, showRecoveredPopup } from "./components/Modal.js";
 import { playSuccess, playWarning } from "./components/Sound.js";
 import { initVoiceInput } from "./components/VoiceInput.js";
 
@@ -77,7 +77,9 @@ async function checkExpenseWarning(expenses: Expense[]) {
 async function loadTotal() {
   const data = await apiRequest<{ total_cents: number }>("GET", "/expenses/total");
   updateTotalDisplay(data.total_cents);
-  if (data.total_cents <= WARNING_THRESHOLD_CENTS) {
+  if (data.total_cents >= WARNING_THRESHOLD_CENTS) {
+    setTotalColorRed();
+  } else {
     resetTotalColor();
     warningAcknowledged = false;
   }
@@ -96,8 +98,9 @@ async function handleEdit(exp: Expense) {
   loadExpenses();
 }
 
-async function handleDelete(id: string) {
-  const confirmed = await showConfirm("Delete this expense?");
+async function handleDelete(id: string, description?: string) {
+  const msg = description ? `Confirm removal of <strong>${description}</strong> expense?` : "Delete this expense?";
+  const confirmed = await showConfirm(msg);
   if (!confirmed) return;
   await apiRequest("DELETE", `/expenses/${id}`);
   showToast("Deleted");
@@ -110,11 +113,18 @@ function loadMainApp() {
   app.innerHTML = `
     <div class="app-header">
       <h1>Expenses Tracker</h1>
-      <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
+      <div class="header-actions">
+        <button id="extra-btn" class="theme-btn" aria-label="Extra action">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+          </svg>
+        </button>
+        <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
     </div>
     <div id="total-container"></div>
     <div id="input-container"></div>
@@ -123,6 +133,7 @@ function loadMainApp() {
   `;
 
   initThemeToggle();
+  initExtraBtn();
   loadTotalContainer();
   loadInputContainer();
   loadListContainer();
@@ -164,6 +175,85 @@ function loadTotalContainer() {
   if (!container) return;
   const totalEl = createTotalAmount();
   container.appendChild(totalEl);
+}
+
+function initExtraBtn() {
+  const btn = document.getElementById("extra-btn");
+  if (!btn) return;
+  const actionsEl = document.querySelector(".header-actions");
+  if (!actionsEl) return;
+
+  const dropdown = document.createElement("div");
+  dropdown.className = "extra-dropdown";
+  dropdown.innerHTML = `
+    <button class="dropdown-item delete-all-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <span>Delete all expenses</span>
+    </button>
+    <button class="dropdown-item recover-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      <span>Recover your deleted Expenses</span>
+    </button>
+  `;
+  actionsEl.appendChild(dropdown);
+
+  function closeDropdown() {
+    if (dropdown.classList.contains("open")) {
+      dropdown.classList.remove("open");
+      dropdown.classList.add("closing");
+      setTimeout(() => dropdown.classList.remove("closing"), 200);
+    }
+  }
+
+  function openDropdown() {
+    dropdown.classList.remove("closing");
+    void dropdown.offsetWidth;
+    dropdown.classList.add("open");
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (dropdown.classList.contains("open")) {
+      closeDropdown();
+    } else if (dropdown.classList.contains("closing")) {
+      dropdown.classList.remove("closing");
+      openDropdown();
+    } else {
+      openDropdown();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!dropdown.contains(e.target as Node) && e.target !== btn) {
+      if (dropdown.classList.contains("open")) {
+        closeDropdown();
+      } else if (dropdown.classList.contains("closing")) {
+        dropdown.classList.remove("closing");
+      }
+    }
+  });
+
+  const deleteAllBtn = dropdown.querySelector(".delete-all-btn") as HTMLButtonElement;
+  deleteAllBtn.addEventListener("click", async () => {
+    closeDropdown();
+    const confirmed = await showConfirm("Delete all expenses?");
+    if (!confirmed) return;
+    await apiRequest("DELETE", "/expenses");
+    showToast("All expenses deleted");
+    warningAcknowledged = false;
+    loadExpenses();
+  });
+
+  const recoverBtn = dropdown.querySelector(".recover-btn") as HTMLButtonElement;
+  recoverBtn.addEventListener("click", async () => {
+    closeDropdown();
+    const confirmed = await showRecoverConfirm();
+    if (!confirmed) return;
+    await apiRequest("POST", "/expenses/recover");
+    showRecoveredPopup();
+    warningAcknowledged = false;
+    loadExpenses();
+  });
 }
 
 const moonSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
@@ -238,7 +328,7 @@ function loadFabButton() {
     async deleteExpense(index: number) {
       const exp = currentExpenses[index];
       if (!exp) return;
-      await handleDelete(exp.id);
+      await handleDelete(exp.id, exp.description);
     },
     async editExpense(index: number) {
       const exp = currentExpenses[index];
