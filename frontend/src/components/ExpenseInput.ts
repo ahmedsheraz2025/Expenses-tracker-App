@@ -49,7 +49,7 @@ export function createExpenseInput(props: ExpenseInputProps): HTMLElement {
     if (!desc) {
       descInput.classList.add("input-error");
       playError();
-      showError("Enter your description", () => descInput.classList.remove("input-error"));
+      showError("Enter your Description", () => descInput.classList.remove("input-error"));
       descInput.focus();
       return;
     }

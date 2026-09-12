@@ -156,8 +156,9 @@ export function showRecoverConfirm(): Promise<boolean> {
     const overlay = document.createElement("div");
     overlay.className = "modal-overlay";
     overlay.innerHTML = `
-      <div class="modal">
-        <p class="modal-message">Deleted your all Expenses by mistake? Don't worry press Recover to get back your Expenses</p>
+      <div class="modal modal-recover">
+        <p class="modal-message" style="text-align:center">Deleted your all Expenses by mistake?</p>
+        <p class="modal-message" style="text-align:center; margin-top:-12px">Don't worry, Press Recover to get back your Expenses</p>
         <div class="modal-actions">
           <button class="modal-btn modal-cancel">Cancel</button>
           <button class="modal-btn modal-confirm" style="background:#059669">Recover</button>

@@ -14,6 +14,7 @@ export function showToast(message: string, showIcon = true) {
 export function showError(message: string, onClose?: () => void) {
   const container = document.getElementById("error-container");
   if (!container) return;
+  if (container.children.length > 0) return;
   const el = document.createElement("div");
   el.className = "error-toast";
   el.textContent = message;

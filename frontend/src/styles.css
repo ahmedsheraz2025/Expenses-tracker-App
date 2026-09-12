@@ -633,6 +633,18 @@ tbody tr:first-child td[colspan] {
   max-width: 420px;
 }
 
+.modal-recover {
+  max-width: 520px;
+}
+
+.modal-recover .modal-actions {
+  justify-content: center;
+}
+
+.modal-recover .modal-message:last-of-type {
+  white-space: nowrap;
+}
+
 .modal-title {
   font-size: 1.2rem;
   font-weight: 700;

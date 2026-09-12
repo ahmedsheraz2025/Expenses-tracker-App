@@ -1,0 +1,8 @@
+INFO:     Started server process [14244]
+INFO:     Waiting for application startup.
+D:\Agentic AI Journey\General Agents\OpenCode\Projects\Expenses tracker App\Expenses-tracker-App\backend\.venv\Lib\site-packages\aiomysql\cursors.py:458: Warning: Table 'expenses' already exists
+  await self._do_get_result()
+D:\Agentic AI Journey\General Agents\OpenCode\Projects\Expenses tracker App\Expenses-tracker-App\backend\.venv\Lib\site-packages\aiomysql\cursors.py:458: Warning: Table 'settings' already exists
+  await self._do_get_result()
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)

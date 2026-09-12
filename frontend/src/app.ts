@@ -70,7 +70,10 @@ async function checkExpenseWarning(expenses: Expense[]) {
     const recentExpense = expenses[0];
     await apiRequest("DELETE", `/expenses/${recentExpense.id}`);
     showToast("Deleted");
-    await loadExpenses();
+    const data = await apiRequest<{ expenses: Expense[] }>("GET", "/expenses");
+    currentExpenses = data.expenses;
+    renderExpenses("expense-tbody", data.expenses, handleEdit, handleDelete);
+    await loadTotal();
   }
 }
 
@@ -157,7 +160,7 @@ function loadInputContainer() {
         playSuccess();
       }
       showToast("Added");
-      loadExpenses();
+      await loadExpenses();
     },
   });
   container.appendChild(inputEl);
@@ -320,7 +323,7 @@ function loadFabButton() {
         playSuccess();
       }
       showToast("Added");
-      loadExpenses();
+      await loadExpenses();
     },
     toggleTheme() {
       document.getElementById("theme-toggle")?.click();

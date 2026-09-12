@@ -30,7 +30,7 @@ async def create_pool() -> None:
         db=settings.db_name,
         minsize=1,
         maxsize=5,
-        autocommit=False,
+        autocommit=True,
         pool_recycle=3600,
         cursorclass=aiomysql.cursors.DictCursor,
     )

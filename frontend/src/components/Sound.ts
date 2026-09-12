@@ -1,6 +1,6 @@
-const successAudio = new Audio("/success.mp3");
-const errorAudio = new Audio("/error.mp3");
-const warningAudio = new Audio("/warning.mp3");
+const successAudio = new Audio("/assets/sounds/success.mp3");
+const errorAudio = new Audio("/assets/sounds/error.mp3");
+const warningAudio = new Audio("/assets/sounds/warning.mp3");
 
 export function playSuccess() {
   successAudio.currentTime = 0;
